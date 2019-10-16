@@ -123,23 +123,38 @@ void sign_band(int sign_time, Band *band, Array *left_array, Array *right_array,
     int sign_time_counter = 0;
     int transport_time = 0;
     State prev_state;
-    int is_used_prev_state = FALSE;
     Package *package;
-    while(left_array->length != left_array_index || right_array->length != right_array_index || is_used_prev_state != FALSE){
+    while(left_array->length != left_array_index || right_array->length != right_array_index){
 
         if(band->sign_side == LEFT){ // If the current side is left, we use a package of the left
-            package = &left_array->package_array[left_array_index]; // Define a package to extract the information
-            left_array_index += 1; // Increment the left index
-            transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
+            if(left_array->length != left_array_index){
+                package = &left_array->package_array[left_array_index]; // Define a package to extract the information
+                left_array_index += 1; // Increment the left index
+                transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
-            state->package = *package;  // Defining which package is used at the time
+                state->package = *package;  // Defining which package is used at the time
+            } else{
+                package = &right_array->package_array[right_array_index]; // Define a package to extract the information
+                right_array_index += 1; // Increment the left index
+                transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
+            * package will take to pass the through the band*/
+                state->package = *package; // Defining which package is used at the time
+            }
         }
         if(band->sign_side == RIGHT){ // If the current side is right, we use a package of the right
-            package = &right_array->package_array[right_array_index]; // Define a package to extract the information
-            right_array_index += 1; // Increment the left index
-            transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
+            if(right_array->length != right_array_index){
+                package = &right_array->package_array[right_array_index]; // Define a package to extract the information
+                right_array_index += 1; // Increment the left index
+                transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
-            state->package = *package; // Defining which package is used at the time
+                state->package = *package; // Defining which package is used at the time
+            } else {
+                package = &left_array->package_array[left_array_index]; // Define a package to extract the information
+                left_array_index += 1; // Increment the left index
+                transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
+            * package will take to pass the through the band*/
+                state->package = *package;  // Defining which package is used at the time
+            }
         }
         for(int i = 0; i < transport_time; i++){ // Loop to simulate the package transport
             state->state = i;                    // Save the current loop's current state
@@ -169,7 +184,6 @@ void sign_band(int sign_time, Band *band, Array *left_array, Array *right_array,
                     } else {
                         continue;
                     }
-
                 }
                 if(band->sign_side == RIGHT && right_array->length != right_array_index){
                     if(right_array->package_array[right_array_index].type == RADIOACTIVE){
@@ -193,13 +207,14 @@ void sign_band(int sign_time, Band *band, Array *left_array, Array *right_array,
                         continue;
                     }
                 } else{
-                    
+                    continue;
                 }
 
             } else {
                 continue;
             }
         }
+
 
     }
 }
