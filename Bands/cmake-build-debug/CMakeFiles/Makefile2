@@ -44,10 +44,10 @@ RM = /snap/clion/88/bin/cmake/linux/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/crisptofer-pc/CLionProjects/Bands
+CMAKE_SOURCE_DIR = /home/crisptofer-pc/Documents/Proyecto_1/Proyecto_1/Bands
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/crisptofer-pc/CLionProjects/Bands/cmake-build-debug
+CMAKE_BINARY_DIR = /home/crisptofer-pc/Documents/Proyecto_1/Proyecto_1/Bands/cmake-build-debug
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -74,14 +74,14 @@ preinstall:
 CMakeFiles/Bands.dir/all:
 	$(MAKE) -f CMakeFiles/Bands.dir/build.make CMakeFiles/Bands.dir/depend
 	$(MAKE) -f CMakeFiles/Bands.dir/build.make CMakeFiles/Bands.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/crisptofer-pc/CLionProjects/Bands/cmake-build-debug/CMakeFiles --progress-num=1,2 "Built target Bands"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/crisptofer-pc/Documents/Proyecto_1/Proyecto_1/Bands/cmake-build-debug/CMakeFiles --progress-num=1,2 "Built target Bands"
 .PHONY : CMakeFiles/Bands.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/Bands.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/crisptofer-pc/CLionProjects/Bands/cmake-build-debug/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/crisptofer-pc/Documents/Proyecto_1/Proyecto_1/Bands/cmake-build-debug/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/Bands.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/crisptofer-pc/CLionProjects/Bands/cmake-build-debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/crisptofer-pc/Documents/Proyecto_1/Proyecto_1/Bands/cmake-build-debug/CMakeFiles 0
 .PHONY : CMakeFiles/Bands.dir/rule
 
 # Convenience name for target.

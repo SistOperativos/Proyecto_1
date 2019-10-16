@@ -7,6 +7,9 @@
 #define FALSE 0
 #define LEFT 0
 #define RIGHT 1
+#define RADIOACTIVE 0
+#define URGENT 1
+#define NORMAL 2
 
 typedef struct Package{
     int weight;          // Band's weight
@@ -121,17 +124,18 @@ void sign_band(int sign_time, Band *band, Array *left_array, Array *right_array,
     int transport_time = 0;
     State prev_state;
     int is_used_prev_state = FALSE;
+    Package *package;
     while(left_array->length != left_array_index || right_array->length != right_array_index || is_used_prev_state != FALSE){
 
         if(band->sign_side == LEFT){ // If the current side is left, we use a package of the left
-            Package *package = &left_array->package_array[left_array_index]; // Define a package to extract the information
+            package = &left_array->package_array[left_array_index]; // Define a package to extract the information
             left_array_index += 1; // Increment the left index
             transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
             state->package = *package;  // Defining which package is used at the time
         }
         if(band->sign_side == RIGHT){ // If the current side is right, we use a package of the right
-            Package *package = &right_array->package_array[right_array_index]; // Define a package to extract the information
+            package = &right_array->package_array[right_array_index]; // Define a package to extract the information
             right_array_index += 1; // Increment the left index
             transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
@@ -142,16 +146,58 @@ void sign_band(int sign_time, Band *band, Array *left_array, Array *right_array,
             sleep(1);                    // Wait for a second
             sign_time_counter += 1;
             if(sign_time_counter == sign_time){
-
                 band->sign_side = !band->sign_side;
                 sign_time_counter = 0;
+                if(band->sign_side == LEFT && left_array->length != left_array_index){
+                    if(left_array->package_array[left_array_index].type == RADIOACTIVE){
+                        prev_state.package = state->package;
+                        prev_state.state = prev_state.state;
+                        package = &left_array->package_array[left_array_index];
+                        left_array_index += 1; // Increment the left index
+                        transport_time = get_t_time(package->weight, band->band_length, band->band_strength);
+                        state->package = *package;  // Defining which package is used at the time
+                        for(int k = 0; k<transport_time; k++){
+                            state->state = k;                    // Save the current loop's current state
+                            sleep(1);                    // Wait for a second
+                            sign_time_counter += 1;
+                        }
+                        state->state = prev_state.state;
+                        state->package = prev_state.package;
+                        package = &state->package;
+                        transport_time = get_t_time(package->weight, band->band_length, band->band_strength);
+                        continue;
+                    } else {
+                        continue;
+                    }
 
-                if(band->sign_side == LEFT){
-                    if(left_array->package_array[left_array_index].type == )
                 }
-                if(band->sign_side == RIGHT){
+                if(band->sign_side == RIGHT && right_array->length != right_array_index){
+                    if(right_array->package_array[right_array_index].type == RADIOACTIVE){
+                        prev_state.package = state->package;
+                        prev_state.state = prev_state.state;
+                        package = &right_array->package_array[right_array_index];
+                        right_array_index += 1; // Increment the left index
+                        transport_time = get_t_time(package->weight, band->band_length, band->band_strength);
+                        state->package = *package;  // Defining which package is used at the time
+                        for(int k = 0; k<transport_time; k++){
+                            state->state = k;                    // Save the current loop's current state
+                            sleep(1);                    // Wait for a second
+                            sign_time_counter += 1;
+                        }
+                        state->state = prev_state.state;
+                        state->package = prev_state.package;
+                        package = &state->package;
+                        transport_time = get_t_time(package->weight, band->band_length, band->band_strength);
+                        continue;
+                    }else{
+                        continue;
+                    }
+                } else{
+                    
+                }
 
-                }
+            } else {
+                continue;
             }
         }
 
