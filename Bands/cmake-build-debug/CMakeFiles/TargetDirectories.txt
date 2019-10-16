@@ -1,0 +1,3 @@
+/home/crisptofer-pc/CLionProjects/Bands/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/crisptofer-pc/CLionProjects/Bands/cmake-build-debug/CMakeFiles/Bands.dir
+/home/crisptofer-pc/CLionProjects/Bands/cmake-build-debug/CMakeFiles/edit_cache.dir
