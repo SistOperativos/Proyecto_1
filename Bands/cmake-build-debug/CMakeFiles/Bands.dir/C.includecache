@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/crisptofer-pc/Documents/Proyecto_1/Proyecto_1/Bands/main.c
+stdio.h
+-
+stdlib.h
+-
+math.h
+-
+unistd.h
+-
+time.h
+-
+limits.h
+-
+

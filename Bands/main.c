@@ -3,6 +3,8 @@
 #include <math.h>
 #include <unistd.h>
 #include <time.h>
+#include <limits.h>
+
 #define TRUE 1
 #define FALSE 0
 #define LEFT 0
@@ -40,6 +42,92 @@ int genRandoms(int lower, int upper)
     srand((unsigned) time(&t));
     int num = (rand() % (upper - lower + 1)) + lower;
     return num;
+}
+
+double factorial(int k)
+{
+    double kf = 1;
+    for(int i = 2; i<=k; i++){
+        kf= kf*i;
+    }
+    return kf;
+}
+
+
+int poisson()
+{
+    //Initializing random generator
+    int l = 10;
+    int k = genRandoms(0,20);             //k
+    double kf= factorial(k);                                     //k!
+    double f = ((exp(-l))*(pow(l,k)))/(kf);
+    return (int)fabs(f*100);
+}
+
+int normalRandom() {
+    time_t t;
+    srand((unsigned) time(&t));
+    double u = ((double) rand() / (RAND_MAX)) * 2 - 1;
+    double v = ((double) rand() / (RAND_MAX)) * 2 - 1;
+    double r = u * u + v * v;
+    if (r == 0 || r > 1){
+        return normalRandom();
+    } else {
+        double c = sqrt(-2 * log(r) / r);
+        return (int)fabs(u * c*100);
+    }
+}
+
+Array* package_gen(int distribution, float n_percentage, float u_percentage, float r_percentage){
+    int package_num;
+    if(distribution == 0){ //Normal
+        package_num = normalRandom();
+    } else { //poisson
+        package_num = poisson();
+    }
+    int urgent_num = (int)ceil((u_percentage*(float)package_num));
+    int radioactive_num = (int)ceil((r_percentage*(float)package_num));
+    int normal_num = (int)ceil((n_percentage*(float)package_num));
+    Array* packages_list = malloc(sizeof(Array));
+    packages_list->length = urgent_num + radioactive_num + normal_num;
+    packages_list->package_array = malloc(packages_list->length* sizeof(Package));
+    if(packages_list->package_array == NULL){
+        printf("Memory hasn't been allocated correctly \n");
+        exit(0);
+    }
+    int counter = 0;
+    while(urgent_num != 0 || radioactive_num != 0 || normal_num != 0){
+        int t = genRandoms(0,2);
+        if((t == RADIOACTIVE && radioactive_num != 0) || ((urgent_num == 0 || normal_num == 0) && radioactive_num != 0)){ // radioactive
+            Package package;
+            package.type = RADIOACTIVE;
+            package.weight = genRandoms(0,20);
+            packages_list->package_array[counter] = package;
+            radioactive_num -= 1;
+            counter += 1;
+            continue;
+        } else if ((t == URGENT && urgent_num != 0) || ((radioactive_num == 0 || normal_num == 0) && urgent_num != 0)){
+            Package package;
+            package.type = URGENT;
+            package.weight = genRandoms(0,20);
+            packages_list->package_array[counter] = package;
+            urgent_num -= 1;
+            counter += 1;
+            continue;
+        } else if((t == NORMAL && normal_num != 0) || ((radioactive_num == 0 || urgent_num == 0) && normal_num != 0)){
+            Package package;
+            package.type = NORMAL;
+            package.weight = genRandoms(0,20);
+            packages_list->package_array[counter] = package;
+            normal_num -= 1;
+            counter += 1;
+            continue;
+        } else {
+            continue;
+        }
+    }
+    return packages_list;
+
 }
 
 //calculating total time to commute a packages between sides
@@ -214,24 +302,8 @@ void sign_band(int sign_time, Band *band, Array *left_array, Array *right_array,
                 continue;
             }
         }
-
-
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 void random_band(Band *band, Array *left_array, Array *right_array, State *state){
@@ -309,43 +381,23 @@ void create_band(int algorithm_mode, int W, int sign_time, Band *band, Array *le
 
 
 int main(){
-    State state;
-    int algorithm_mode = 0;
-    int W = 2;
-    int sign_time = 5;
-    Band band;
-    band.band_length = 2;
-    band.band_strength = 50;
-    Array left_array;
-    left_array.length = 4;
-    left_array.package_array = malloc(left_array.length* sizeof(Package));
-    if(left_array.package_array == NULL){
-        printf("Memory hasn't been allocated correctly \n");
-        exit(0);
+    Array* package_list = package_gen(0, 0.10, 0.5, 0.4);
+    int r = 0;
+    int u = 0;
+    int n = 0;
+    for(int i = 0; i < package_list->length; i++){
+        int k = package_list->package_array[i].type;
+        if(k == RADIOACTIVE){
+            printf("Radioactivo \n");
+            r += 1;
+        } else if(k == URGENT){
+            printf("Urgente \n");
+            u += 1;
+        } else {
+            printf("Normal \n");
+            n += 1;
+        }
     }
-    Array right_array;
-    right_array.length = 3;
-    right_array.package_array = malloc(right_array.length* sizeof(Package));
-    if(right_array.package_array == NULL){
-        printf("Memory hasn't been allocated correctly \n");
-        exit(0);
-    }
-    Package pack;
-    pack.weight = 2;
-    pack.type = 0;
-
-    for(int i = 0; i < left_array.length; i++) {
-        left_array.package_array[i] = pack;
-        pack.weight = pack.weight + 1;
-        //printf("%d: %d \n", i, left_array.package_array[i].weight);
-    }
-    pack.weight = 2;
-    for(int i = 0; i < right_array.length; i++){
-        right_array.package_array[i] = pack;
-        pack.weight = pack.weight + 1;
-        //printf("%d: %d \n", i, right_array.package_array[i].weight);
-    }
-    //create_band(algorithm_mode, W, sign_time, &band, &left_array, &right_array, &state);
-    create_band(2, 0, 0, &band, &left_array, &right_array, &state);
+    printf("Radioactivos: %d \nUrgentes: %d \nNormales: %d \nTotal: %d \n", r, u, n, package_list->length);
     return 0;
 }
