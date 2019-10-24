@@ -14,11 +14,11 @@
 #define STACK_SIZE 16384
 
 // Thread fuctions
-int lthread_create(pthread_t*, void*, void *(*function) (void *), void *arg); 
+int lthread_create(TCB*, void*, void *(*function) (void *), void *arg); 
 void lthread_exit(void*); 
-int lthread_join(pthread_t id, void **result);
+int lthread_join(int ThreadId, void **result);
 int lthread_yield(void);
-int lthread_detach(pthread_t thread);
+int lthread_detach(TCB thread);
 
 // Mutex functions
 int lmutex_init(lmutex* mutex);

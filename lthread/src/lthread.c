@@ -153,7 +153,7 @@ static bool signalTimer(void){
 	return true;
 }
 
-int lthread_create(pthread_t* thread, void* attr, void *(*function) (void *), void *arg){
+int lthread_create(TCB* thread, void* attr, void *(*function) (void *), void *arg){
 	blockSIGPROF();
 	if (! initialized) {
 		if (! initQueues()) {
@@ -190,7 +190,6 @@ int lthread_create(pthread_t* thread, void* attr, void *(*function) (void *), vo
 		return -1;
 	}
 	unblockSIGPROF(); 
-	*thread = newThread->id;
 	return 0;
 }
 
@@ -209,21 +208,21 @@ void lthread_exit(void *result){
 	setcontext(&running->context); 
 }
 
-int lthread_join(pthread_t id, void **result){
-	if (id < 0) {
+int lthread_join(int ThreadId, void **result){
+	if (ThreadId < 0) {
 		errno = EINVAL;
 		return -1;
 	}
 	while(true){
 		blockSIGPROF();
-		TCB *block = removeThreadById(terminated, id);
+		TCB *block = removeThreadById(terminated, ThreadId);
 		unblockSIGPROF();
 		if (block != NULL) {
 			if (result!=NULL){
 				*result = block->funcReturn;
 			}
 			deleteTCB(block);
-			return id;
+			return ThreadId;
 		}
 	}
 }

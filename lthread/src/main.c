@@ -26,7 +26,7 @@ void* testFunc(void* args){
 }
 
 int main(){
-	pthread_t* threads = malloc(sizeof(pthread_t)*3);;
+	TCB* threads = malloc(sizeof(TCB)*3);;
 	int* res= malloc(sizeof(int)*3);;
 	lthread_create(&threads[0],NULL,testFunc,1);
 	lthread_create(&threads[1],NULL,testFunc,2);
