@@ -12,6 +12,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b3f12458-5768-483e-9a83-f7d0064fe47b" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Bands" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Bands" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/main.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -75,6 +77,7 @@
       <workItem from="1570986720720" duration="32759000" />
       <workItem from="1571192469758" duration="5542000" />
       <workItem from="1571785685792" duration="16959000" />
+      <workItem from="1571876911161" duration="8501000" />
     </task>
     <servers />
   </component>
@@ -99,8 +102,8 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.c</url>
-          <line>414</line>
-          <option name="timeStamp" value="25" />
+          <line>178</line>
+          <option name="timeStamp" value="31" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

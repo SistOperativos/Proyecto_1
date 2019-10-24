@@ -12,6 +12,7 @@
 #define RADIOACTIVE 0
 #define URGENT 1
 #define NORMAL 2
+#define MAX_WEIGHT 10
 
 typedef struct Package{
     int weight;          // Band's weight
@@ -21,6 +22,7 @@ typedef struct Package{
 typedef struct State{
     int state;
     Package package;
+    int percentage;
 }State;
 
 typedef struct Band{
@@ -38,8 +40,6 @@ float coefficient_mk = 0.56f;//Friction Kinetic coefficient between leather and 
 
 int genRandoms(int lower, int upper)
 {
-    time_t t;
-    srand((unsigned) time(&t));
     int num = (rand() % (upper - lower + 1)) + lower;
     return num;
 }
@@ -65,8 +65,6 @@ int poisson()
 }
 
 int normalRandom() {
-    time_t t;
-    srand((unsigned) time(&t));
     double u = ((double) rand() / (RAND_MAX)) * 2 - 1;
     double v = ((double) rand() / (RAND_MAX)) * 2 - 1;
     double r = u * u + v * v;
@@ -85,6 +83,7 @@ Array* package_gen(int distribution, float n_percentage, float u_percentage, flo
     } else { //poisson
         package_num = poisson();
     }
+
     int urgent_num = (int)ceil((u_percentage*(float)package_num));
     int radioactive_num = (int)ceil((r_percentage*(float)package_num));
     int normal_num = (int)ceil((n_percentage*(float)package_num));
@@ -101,7 +100,7 @@ Array* package_gen(int distribution, float n_percentage, float u_percentage, flo
         if((t == RADIOACTIVE && radioactive_num != 0) || ((urgent_num == 0 || normal_num == 0) && radioactive_num != 0)){ // radioactive
             Package package;
             package.type = RADIOACTIVE;
-            package.weight = genRandoms(0,20);
+            package.weight = genRandoms(1, MAX_WEIGHT);
             packages_list->package_array[counter] = package;
             radioactive_num -= 1;
             counter += 1;
@@ -109,7 +108,7 @@ Array* package_gen(int distribution, float n_percentage, float u_percentage, flo
         } else if ((t == URGENT && urgent_num != 0) || ((radioactive_num == 0 || normal_num == 0) && urgent_num != 0)){
             Package package;
             package.type = URGENT;
-            package.weight = genRandoms(0,20);
+            package.weight = genRandoms(1,MAX_WEIGHT);
             packages_list->package_array[counter] = package;
             urgent_num -= 1;
             counter += 1;
@@ -117,7 +116,7 @@ Array* package_gen(int distribution, float n_percentage, float u_percentage, flo
         } else if((t == NORMAL && normal_num != 0) || ((radioactive_num == 0 || urgent_num == 0) && normal_num != 0)){
             Package package;
             package.type = NORMAL;
-            package.weight = genRandoms(0,20);
+            package.weight = genRandoms(1,MAX_WEIGHT);
             packages_list->package_array[counter] = package;
             normal_num -= 1;
             counter += 1;
@@ -128,6 +127,27 @@ Array* package_gen(int distribution, float n_percentage, float u_percentage, flo
     }
     return packages_list;
 
+}
+
+void print_packages(Array* package_list){ // TODO: Borrar esta función, es solo para prueba
+    int r = 0;
+    int u = 0;
+    int n = 0;
+    for(int i = 0; i < package_list->length; i++){
+        int k = package_list->package_array[i].type;
+        int weight = package_list->package_array[i].weight;
+        if(k == RADIOACTIVE){
+            printf("Radioactivo \n Peso: %d \n", weight);
+            r += 1;
+        } else if(k == URGENT){
+            printf("Urgente \n Peso: %d \n", weight);
+            u += 1;
+        } else {
+            printf("Normal \n Peso: %d \n", weight);
+            n += 1;
+        }
+    }
+    printf("Radioactivos: %d \nUrgentes: %d \nNormales: %d \nTotal: %d \n \n", r, u, n, package_list->length);
 }
 
 //calculating total time to commute a packages between sides
@@ -153,6 +173,8 @@ void package_equity_band(int W, Band *band, State *state, int distribution, floa
         int right_array_index = 0; // Save the current position into right array
         Array *left_array = package_gen(distribution, n_percentage, u_percentage, r_percentage);
         Array *right_array = package_gen(distribution, n_percentage, u_percentage, r_percentage);
+        print_packages(left_array); //TODO: elminar esto
+        print_packages(right_array); //TODO: eliminar esto
         int current_side = LEFT;
         int transport_time;
         // Validating that the index are still into the arrays
@@ -164,6 +186,7 @@ void package_equity_band(int W, Band *band, State *state, int distribution, floa
                 transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                 state->package = *package;  // Defining which package is used at the time
+                state->percentage = 0;
             }
             if(current_side == RIGHT){ // If the current side is right, we use a package of the right
                 Package *package = &right_array->package_array[right_array_index]; // Define a package to extract the information
@@ -171,11 +194,14 @@ void package_equity_band(int W, Band *band, State *state, int distribution, floa
                 transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                 state->package = *package; // Defining which package is used at the time
+                state->percentage = 0;
             }
             for(int i = 0; i < transport_time; i++){ // Loop to simulate the package transport
                 state->state = i;                    // Save the current loop's current state
+                state->percentage = (int)ceil((i/transport_time)*100);
                 sleep(1);                    // Wait for a second
             }
+            printf("%d \n",current_side); //TODO: Eliminar esto
             if(package_counter == W-1) {             // If it was reached the W value
                 if (current_side == LEFT && right_array_index != right_array->length) { /* If the current side is LEFT
             * and wasn't reached the maximum of the right_array*/
@@ -228,12 +254,14 @@ void sign_band(int sign_time, Band *band, State *state, int distribution, float 
                     transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                     state->package = *package;  // Defining which package is used at the time
+                    state->percentage = 0;
                 } else{
                     package = &right_array->package_array[right_array_index]; // Define a package to extract the information
                     right_array_index += 1; // Increment the left index
                     transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                     state->package = *package; // Defining which package is used at the time
+                    state->percentage = 0;
                 }
             }
             if(band->sign_side == RIGHT){ // If the current side is right, we use a package of the right
@@ -243,16 +271,19 @@ void sign_band(int sign_time, Band *band, State *state, int distribution, float 
                     transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                     state->package = *package; // Defining which package is used at the time
+                    state->percentage = 0;
                 } else {
                     package = &left_array->package_array[left_array_index]; // Define a package to extract the information
                     left_array_index += 1; // Increment the left index
                     transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                     state->package = *package;  // Defining which package is used at the time
+                    state->percentage = 0;
                 }
             }
             for(int i = 0; i < transport_time; i++){ // Loop to simulate the package transport
                 state->state = i;                    // Save the current loop's current state
+                state->percentage = (int)ceil((i/transport_time)*100);
                 sleep(1);                    // Wait for a second
                 sign_time_counter += 1;
                 if(sign_time_counter == sign_time){
@@ -266,8 +297,10 @@ void sign_band(int sign_time, Band *band, State *state, int distribution, float 
                             left_array_index += 1; // Increment the left index
                             transport_time = get_t_time(package->weight, band->band_length, band->band_strength);
                             state->package = *package;  // Defining which package is used at the time
+                            state->percentage = 0;
                             for(int k = 0; k<transport_time; k++){
                                 state->state = k;                    // Save the current loop's current state
+                                state->percentage = (int)ceil((k/transport_time)*100);
                                 sleep(1);                    // Wait for a second
                                 sign_time_counter += 1;
                             }
@@ -275,6 +308,7 @@ void sign_band(int sign_time, Band *band, State *state, int distribution, float 
                             state->package = prev_state.package;
                             package = &state->package;
                             transport_time = get_t_time(package->weight, band->band_length, band->band_strength);
+                            state->percentage = (int)ceil((i/transport_time)*100);
                             continue;
                         } else {
                             continue;
@@ -288,8 +322,10 @@ void sign_band(int sign_time, Band *band, State *state, int distribution, float 
                             right_array_index += 1; // Increment the left index
                             transport_time = get_t_time(package->weight, band->band_length, band->band_strength);
                             state->package = *package;  // Defining which package is used at the time
+                            state->percentage = 0;
                             for(int k = 0; k<transport_time; k++){
                                 state->state = k;                    // Save the current loop's current state
+                                state->percentage = (int)ceil((k/transport_time)*100);
                                 sleep(1);                    // Wait for a second
                                 sign_time_counter += 1;
                             }
@@ -297,6 +333,7 @@ void sign_band(int sign_time, Band *band, State *state, int distribution, float 
                             state->package = prev_state.package;
                             package = &state->package;
                             transport_time = get_t_time(package->weight, band->band_length, band->band_strength);
+                            state->percentage = (int)ceil((i/transport_time)*100);
                             continue;
                         }else{
                             continue;
@@ -333,6 +370,7 @@ void random_band(Band *band, State *state, int distribution, float n_percentage,
                     transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                     state->package = *package;  // Defining which package is used at the time
+                    state->percentage = 0;
                 }
                 if(current_side == RIGHT){ // If the current side is right, we use a package of the right
                     Package *package = &right_array->package_array[right_array_index]; // Define a package to extract the information
@@ -340,9 +378,11 @@ void random_band(Band *band, State *state, int distribution, float n_percentage,
                     transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                     state->package = *package; // Defining which package is used at the time
+                    state->percentage = 0;
                 }
                 for(int i = 0; i < transport_time; i++){ // Loop to simulate the package transport
                     state->state = i;                    // Save the current loop's current state
+                    state->percentage = (int)ceil((i/transport_time)*100);
                     sleep(1);                    // Wait for a second
                 }
                 if(current_side == LEFT && right_array_index == right_array->length){ // If the maximum array value was reached, change side
@@ -362,6 +402,7 @@ void random_band(Band *band, State *state, int distribution, float n_percentage,
                     transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                     state->package = *package;  // Defining which package is used at the time
+                    state->percentage = 0;
                 }
                 if(current_side == RIGHT){ // If the current side is right, we use a package of the right
                     Package *package = &right_array->package_array[right_array_index]; // Define a package to extract the information
@@ -369,9 +410,11 @@ void random_band(Band *band, State *state, int distribution, float n_percentage,
                     transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
             * package will take to pass the through the band*/
                     state->package = *package; // Defining which package is used at the time
+                    state->percentage = 0;
                 }
                 for(int i = 0; i < transport_time; i++){ // Loop to simulate the package transport
                     state->state = i;                    // Save the current loop's current state
+                    state->percentage = (int)ceil((i/transport_time)*100);
                     sleep(1);                    // Wait for a second
                 }
                 continue;
@@ -380,9 +423,8 @@ void random_band(Band *band, State *state, int distribution, float n_percentage,
     }
 }
 
-
-void create_band(){ //TODO: Implementar archivo de configuración acá
-    /*
+/*
+void create_bands(){ //TODO: Implementar archivo de configuración acá
     if(algorithm_mode == 0){
         package_equity_band(W, band, left_array, right_array, state);
     }
@@ -391,28 +433,19 @@ void create_band(){ //TODO: Implementar archivo de configuración acá
     } else{
         random_band(band, left_array, right_array, state);
     }
-     */
 }
-
+*/
 
 int main(){
-    Array* package_list = package_gen(0, 0.10, 0.5, 0.4);
-    int r = 0;
-    int u = 0;
-    int n = 0;
-    for(int i = 0; i < package_list->length; i++){
-        int k = package_list->package_array[i].type;
-        if(k == RADIOACTIVE){
-            printf("Radioactivo \n");
-            r += 1;
-        } else if(k == URGENT){
-            printf("Urgente \n");
-            u += 1;
-        } else {
-            printf("Normal \n");
-            n += 1;
-        }
-    }
-    printf("Radioactivos: %d \nUrgentes: %d \nNormales: %d \nTotal: %d \n", r, u, n, package_list->length);
+    // to the random
+    time_t t;
+    srand((unsigned) time(&t));
+    //
+    int w = 3;
+    Band band;
+    band.band_strength = 100;
+    band.band_length = 10;
+    State state;
+    package_equity_band(w, &band, &state, 0, 0.1f, 0.4f, 0.5f);
     return 0;
 }
