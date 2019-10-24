@@ -36,6 +36,9 @@ typedef struct Array{
     Package *package_array;
 }Array;
 
+
+
+
 float coefficient_mk = 0.56f;//Friction Kinetic coefficient between leather and metal. mk = 0.56
 
 int genRandoms(int lower, int upper)
@@ -43,6 +46,8 @@ int genRandoms(int lower, int upper)
     int num = (rand() % (upper - lower + 1)) + lower;
     return num;
 }
+
+
 
 double factorial(int k)
 {
@@ -131,6 +136,84 @@ Array* package_gen(int distribution, float n_percentage, float u_percentage, flo
 
 }
 
+int shorter_scheduler(Array* packages, int used_index[],int used_index_lenght)
+{
+    int chosenOne = 0;
+    int found =0;
+
+    for (int i=0; i<packages->length; i++)
+    {   
+        for(int x =0; x < used_index_lenght;x++) {
+            if(i != used_index[x]){
+                continue;
+            } else {
+                found =1;
+                break;
+            } 
+        }
+        if(found ==0){
+            int weight = packages->package_array[i].weight;
+            int chosenOneWeight = packages->package_array[chosenOne].weight;
+                if( i = 0 ) {
+                    chosenOne = i;
+                }
+                else if (chosenOneWeight > weight) {
+                    chosenOne = i;
+                }
+        }
+        else
+            {
+                continue;
+        }
+            
+    }
+    
+    return chosenOne;
+}
+
+int priority_scheduler(Array* packages,int used_index[], int used_index_lenght){
+    int chosenOne = NULL;
+    int secondChoice = NULL;
+    int lastChoice = NULL;
+    int found = 0;
+    for (int i = 0; i<packages->length; i++)
+    {
+        found = 0;
+        for(int x=0; x<used_index_lenght; x++) {
+            if(i != used_index[x]){
+                continue;
+            } else {
+                found =1;
+                break;
+            }  
+        }
+        if(found == 0){
+            int priority = packages->package_array[i].type;
+            if( priority == RADIOACTIVE) {
+                return i;
+            }
+            else if (priority == URGENT) {
+                secondChoice = i;
+            }
+            else 
+                lastChoice = i;
+        }
+        else
+        {
+            continue;
+        }
+        
+    }
+    if (secondChoice != NULL){
+        return secondChoice;
+    }
+    else
+    {
+        return lastChoice;
+    }
+}
+
+
 void print_packages(Array* package_list){ // TODO: Borrar esta función, es solo para prueba
     int r = 0;
     int u = 0;
@@ -168,28 +251,52 @@ int get_t_time(int package_weight, int band_length, int band_strength){
     }
 }
 
-void package_equity_band(int W, Band *band, State *state, int distribution, float n_percentage, float u_percentage, float r_percentage){
+void package_equity_band(int W, Band *band, State *state, int distribution, float n_percentage, float u_percentage, float r_percentage, int schedulerType){
     while(TRUE){
         int package_counter = 0;   // Save the number of packages that have been passed through the band
         int left_array_index = 0;  // Save the current position into left array
-        int right_array_index = 0; // Save the current position into right array
+        int right_array_index = 0; // Save the current position into right array 
         Array *left_array = package_gen(distribution, n_percentage, u_percentage, r_percentage);
         Array *right_array = package_gen(distribution, n_percentage, u_percentage, r_percentage);
-        //print_packages(left_array); //TODO: elminar esto
-        //print_packages(right_array); //TODO: eliminar esto
+        int left_index_counter[left_array->length];
+        int right_index_counter[right_array->length];
+        print_packages(left_array); //TODO: elminar esto
+        print_packages(right_array); //TODO: eliminar esto
         int current_side = LEFT;
         int transport_time;
+        int pkg_index = 0;
+
+
         // Validating that the index are still into the arrays
         while(left_array->length != left_array_index || right_array->length != right_array_index){
-
             if(current_side == LEFT){ // If the current side is left, we use a package of the left
+                if(schedulerType == 1){
+                    left_array_index = priority_scheduler(left_array,left_index_counter,left_array->length);
+                    left_index_counter[left_array_index] = left_array_index;
+                    printf("%d \n",left_index_counter[left_array_index]);
+                     
+                }
+                else if (schedulerType == 2){
+                    left_array_index = shorter_scheduler(left_array,left_index_counter, left_array->length);
+                    left_index_counter[left_array_index] = left_array_index;
+                }
                 Package *package = &left_array->package_array[left_array_index]; // Define a package to extract the information
-                left_array_index += 1; // Increment the left index
+                //printf("%d \n",package->type);
+                left_array_index += 1; // Increment the left index 
                 transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
-            * package will take to pass the through the band*/
+                * package will take to pass the through the band*/
                 state->package = *package;  // Defining which package is used at the time
                 state->percentage = 0;
             } else { // If the current side is right, we use a package of the right
+                if(schedulerType == 1){
+                        right_array_index = priority_scheduler(right_array,right_index_counter,right_array->length);
+                        right_index_counter[right_array_index] = right_array_index;
+                        
+                    }
+                else if (schedulerType == 2){
+                        right_array_index = shorter_scheduler(right_array,right_index_counter,right_array->length);
+                        right_index_counter[right_array_index] = right_array_index;
+                    } 
                 Package *package = &right_array->package_array[right_array_index]; // Define a package to extract the information
                 right_array_index += 1; // Increment the left index
                 transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
@@ -236,7 +343,7 @@ void package_equity_band(int W, Band *band, State *state, int distribution, floa
     }
 }
 
-void sign_band(int sign_time, Band *band, State *state, int distribution, float n_percentage, float u_percentage, float r_percentage){
+void sign_band(int sign_time, Band *band, State *state, int distribution, float n_percentage, float u_percentage, float r_percentage, int schedulerType){
     while(TRUE){
         int left_array_index = 0;  // Save the current position into left array
         int right_array_index = 0; // Save the current position into right array
@@ -244,6 +351,8 @@ void sign_band(int sign_time, Band *band, State *state, int distribution, float 
         Array *right_array = package_gen(distribution, n_percentage, u_percentage, r_percentage);
         print_packages(left_array); //TODO: Lineas de prueba, eliminar
         print_packages(right_array); //TODO: Lineas de prueba, eliminar
+        int left_index_counter[left_array->length];
+        int right_index_counter[right_array->length];
         int sign_time_counter = 0;
         int transport_time = 0;
         State prev_state;
@@ -252,6 +361,15 @@ void sign_band(int sign_time, Band *band, State *state, int distribution, float 
 
             if(band->sign_side == LEFT){ // If the current side is left, we use a package of the left
                 if(left_array->length != left_array_index){
+                    // if(schedulerType == 1){
+                    //     left_array_index = priority_scheduler(left_array,left_index_counter,left_array->length);
+                    //     left_index_counter[left_array_index] = left_array_index;
+                    //     printf("%d \n",left_index_counter[left_array_index]);
+                    // }
+                    // else if (schedulerType == 2){
+                    //     left_array_index = shorter_scheduler(left_array,left_index_counter, left_array->length);
+                    //     left_index_counter[left_array_index] = left_array_index;
+                    // }
                     package = &left_array->package_array[left_array_index]; // Define a package to extract the information
                     left_array_index += 1; // Increment the left index
                     transport_time = get_t_time(package->weight, band->band_length, band->band_strength); /*Getting the time that the
@@ -430,14 +548,14 @@ int main(){
     time_t t;
     srand((unsigned) time(&t));
     //
-    //int w = 3;
+    int w = 3;
     int sign_time = 3;
     Band band;
     band.band_strength = 100;
     band.band_length = 100;
     State state;
-    //package_equity_band(w, &band, &state, 0, 0.1f, 0.4f, 0.5f);
-    //sign_band(sign_time, &band, &state, 0, 0.1f, 0.4f, 0.5f);
+    package_equity_band(w, &band, &state, 0, 0.1f, 0.4f, 0.5f,2);
+    //sign_band(sign_time, &band, &state, 0, 0.1f, 0.4f, 0.5f,4);
     //random_band(&band, &state, 0, 0.1f, 0.4f, 0.5f);
     return 0;
 }
